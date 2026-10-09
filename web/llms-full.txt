@@ -1,0 +1,461 @@
+# vibebackr - Complete Technical Specification & Agent Reference
+
+> Canonical URL: https://vibebac.kr
+> MCP Endpoint: https://vibebac.kr/mcp
+> SDK URL: https://vibebac.kr/vibebackr.js
+> TypeScript Types: https://vibebac.kr/vibebackr.d.ts
+> Web Console: https://vibebac.kr/login
+> Relay Proxy: https://vibebac.kr/relay.html
+
+---
+
+## 🤖 Instructions for AI Coding Assistants (READ FIRST)
+
+### ⭐ Recommended: If you have MCP (Claude Code, Claude Desktop, Cursor, Copilot)
+**MCP is the best, fastest, and recommended way to use VibeBackr.**
+If your environment has access to the VibeBackr MCP server (`https://vibebac.kr/mcp`):
+1. **Directly invoke `create_collection`**: Call `create_collection` to create the namespace for the application (set `auto_invite_shares: true` if users can share items with people who might not have accounts yet). You do NOT need to ask the user to manually create tables or databases.
+2. **Build the client frontend with the SDK**: In the HTML/React/Vue app you generate, include the zero-dependency browser SDK:
+   ```html
+   <script src="https://vibebac.kr/vibebackr.js"></script>
+   <script>
+       const vibe = new VibeBackr({collectionId: 'COLLECTION_ID_YOU_JUST_CREATED'});
+   </script>
+   ```
+3. **Use built-in Google SSO**: In the client app, call `vibe.loginWithGoogle()` when the user needs to sign in. Never ask the user to enter API keys or Bearer tokens in an app UI.
+4. **Publish the single-file HTML app via `publish_app`**: When building a single-file HTML application, call `publish_app` with `collection_id` and `html`. It deploys the app directly to `https://{dashless_collection_id}.vibebac.kr`, configures CORS `origin_urls` automatically, and returns `app_url` so you can share the live link with the user immediately.
+
+---
+
+### 📋 Fallback: If you do NOT have MCP (Google Gemini, ChatGPT, web LLMs)
+If you cannot call MCP tools directly:
+1. **Step 1: Provide the Collection JSON to the user**:
+   Because you cannot create collections automatically over MCP, **you must output a JSON collection configuration for the user** and instruct them:
+   > "Copy this JSON and import it into your VibeBackr console at https://vibebac.kr/login (click **+ New Collection / Import JSON**). Then paste the generated Collection ID into the app code below."
+
+   Example JSON to provide:
+   ```json
+   {
+     "name": "Coffee Tracker",
+     "default_visibility": "public",
+     "origin_urls": ["*"],
+     "vector_search_enabled": true,
+     "auto_invite_shares": true,
+     "records": [
+       {
+         "title": "Blue Bottle Hayes Valley",
+         "content": "Excellent pour-over and single origin espresso",
+         "data": { "rating": 5, "neighborhood": "Hayes Valley" }
+       }
+     ]
+   }
+   ```
+2. **Step 2: Generate the Client App using `vibebackr.js`**:
+   Write the frontend application using `<script src="https://vibebac.kr/vibebackr.js"></script>`.
+   - Configure with the user's `collectionId`: `const vibe = new VibeBackr({collectionId: 'USER_COLLECTION_ID'});`.
+   - **DO NOT build token/API-key settings modals**: Normal users should never paste tokens. They authenticate with `vibe.loginWithGoogle()`, or they read/write public records without login if `default_visibility` is `"public"`.
+
+---
+
+## 1. Domain Models & Schemas
+
+### 1.1 Collection
+A collection acts as an isolated namespace or table for records.
+```json
+{
+  "id": "col_1234567890abcdef",
+  "tenant_id": "tnt_0987654321fedcba",
+  "name": "project_tasks",
+  "default_visibility": "private",
+  "allowed_domains": ["mycompany.com"],
+  "origin_urls": ["http://localhost:5173", "https://myapp.vercel.app"],
+  "vector_search_enabled": true,
+  "auto_invite_shares": true,
+  "created_at": "2026-10-12T12:00:00Z"
+}
+```
+
+### 1.2 Universal Record
+Every item in VibeBackr is a Universal Record.
+```json
+{
+  "id": "rec_1234567890abcdef",
+  "collection_id": "col_1234567890abcdef",
+  "created_by": "usr_0987654321fedcba",
+  "title": "Build landing page",
+  "content": "Detailed markdown requirements, meeting notes, or specs",
+  "data": "{\"priority\":\"high\",\"due_date\":\"2026-11-01\",\"status\":\"in-progress\",\"assignee\":\"sarah@mycompany.com\",\"tags\":[\"frontend\",\"v1\"]}",
+  "access_policy": {
+    "visibility": "shared",
+    "shares": ["sarah@mycompany.com", "dev-team@mycompany.com"]
+  },
+  "created_at": "2026-10-12T12:00:00Z",
+  "updated_at": "2026-10-12T12:00:00Z"
+}
+```
+
+### 1.3 Visibility Types
+- `private`: Accessible only by the owner and the owner's managerial hierarchy (or admins).
+- `shared`: Accessible by the owner, managers, and specifically listed emails in `access_policy.shares`.
+- `public`: Read-accessible by anyone within the authorized domains or anyone authenticated if domain restriction is empty. Write access still requires ownership or manager relationship.
+
+---
+
+## 2. 5-Tier Recursive Waterfall ACL Permissions
+
+Record authorization uses an SQL recursive Common Table Expression (CTE) query enforcing a 5-tier waterfall:
+
+1. **Direct Ownership**: The authenticated user's ID matches `record.created_by`. Full read/write/delete.
+2. **Managerial Hierarchy**: If the authenticated user is a direct or indirect manager of the owner (computed recursively via `manager_email` across `users` and `user_tenants`), full visibility and management permissions apply.
+3. **Email Sharing**: If `record.access_policy.visibility == 'shared'` and the user's email is present in `record.access_policy.shares`. Read access.
+4. **Public Visibility**: If `record.access_policy.visibility == 'public'` and the collection's `allowed_domains` criteria are met. Read access.
+5. **System Administrator Override**: Users with role `admin` bypass all record-level restrictions within their tenant.
+
+---
+
+## 3. Model Context Protocol (MCP) Catalog
+
+The VibeBackr MCP server supports both Streamable HTTP (JSON-RPC over POST) and Server-Sent Events (SSE).
+
+### 3.1 Connection
+- Endpoint: `https://vibebac.kr/mcp`
+- Headers:
+  - `Content-Type: application/json`
+  - `Authorization: Bearer <token>`
+
+### 3.2 Tools
+
+#### `create_collection`
+Creates a new namespace for records.
+- Input Schema:
+  - `name` (string, required): Collection name
+  - `default_visibility` (string, optional: `private`, `public`, `shared`): Default record visibility
+  - `allowed_domains` (string[], optional): Corporate domains permitted to access
+  - `origin_urls` (string[], optional): Frontend origins permitted for CORS (e.g. `['http://localhost:5173']`)
+  - `vector_search_enabled` (boolean, optional): Enable hybrid vector search
+
+#### `update_collection`
+Modifies an existing collection's properties.
+- Input Schema:
+  - `collection_id` (string, required): Collection ID or name
+  - `name` (string, optional)
+  - `default_visibility` (string, optional)
+  - `allowed_domains` (string[], optional)
+  - `origin_urls` (string[], optional)
+  - `vector_search_enabled` (boolean, optional)
+
+#### `publish_app`
+Publishes or updates a single-file HTML frontend application for a collection. Hosted directly on S3/CloudFront at `https://{dashless_collection_id}.vibebac.kr`, automatically adds the subdomain to the collection's `origin_urls`, and returns `app_url` so the agent can give the live link to the user.
+- Input Schema:
+  - `collection_id` (string, required): Collection ID or name
+  - `html` (string, required): Complete single-file HTML document (up to 512KB)
+
+#### `list_collections`
+Returns all collections accessible to the authenticated context across owned and joined tenants.
+- Input Schema: `{}`
+
+#### `create_record`
+Creates a universal record within a collection.
+- Input Schema:
+  - `collection_id` (string, required)
+  - `title` (string, required)
+  - `content` (string, optional): Text/markdown body
+  - `data` (string, optional): Stringified JSON object containing arbitrary custom fields
+  - `visibility` (string, optional: `private`, `public`, `shared`)
+  - `shares` (string[], optional): User emails for shared access
+
+#### `query_records`
+Retrieves records within a collection honoring recursive ACLs.
+- Input Schema:
+  - `collection_id` (string, required)
+
+#### `search_records`
+Performs hybrid vector similarity and keyword search across collection content and structured data.
+- Input Schema:
+  - `collection_id` (string, required)
+  - `query` (string, required): Natural language search query
+  - `limit` (integer, optional, default: 10)
+
+#### `sync_org_directory`
+Batch upserts corporate hierarchy for recursive ACL evaluations.
+- Input Schema:
+  - `users` (array, required):
+    - `email` (string, required)
+    - `name` (string, required)
+    - `role` (string: `admin`, `manager`, `member`)
+    - `manager_email` (string, optional)
+
+#### `batch_create_invites`
+Pre-authorizes a batch of new users and assigns their initial roles for the caller's tenant.
+- Input Schema:
+  - `invites` (array, required):
+    - `email` (string, required)
+    - `role` (string: `admin`, `manager`, `member`)
+    - `manager_email` (string, optional)
+
+#### `get_client_integration_guide`
+Returns dynamic code samples, frontend SDK documentation, and tailored TypeScript definitions.
+- Input Schema:
+  - `collection_id` (string, optional): Pass collection ID to introspect custom schema fields
+  - `topic` (string, optional: `all`, `overview`, `auth`, `records`, `search`, `typescript_client`)
+
+---
+
+## 4. REST API Specification
+
+### 4.1 Tenants
+- `GET /api/tenants` - List all tenants the user owns or belongs to.
+- `POST /api/tenants` - Provision a primary tenant for the user if not already provisioned.
+- `DELETE /api/tenants/{tenant_id}` - Leave a joined tenant.
+
+### 4.2 Collections
+
+#### Create Collection (with optional seed records)
+`POST /api/collections`
+```json
+{
+  "name": "Design Systems",
+  "default_visibility": "public",
+  "origin_urls": ["*"],
+  "vector_search_enabled": true,
+  "records": [
+    {
+      "title": "Color Tokens",
+      "content": "Primary and secondary hex values",
+      "data": { "primary": "#111827", "accent": "#3b82f6" }
+    }
+  ]
+}
+```
+Response: `201 Created`
+```json
+{
+  "id": "col_123",
+  "tenant_id": "tnt_456",
+  "name": "Design Systems",
+  "default_visibility": "public",
+  "origin_urls": ["*"],
+  "vector_search_enabled": true,
+  "created_at": "2026-10-12T12:00:00Z"
+}
+```
+
+#### List Collections
+`GET /api/collections`
+Response: `200 OK` (`Collection[]`)
+
+#### Get Collection
+`GET /api/collections/{collection_id}`
+Response: `200 OK` (`Collection`)
+
+#### Update Collection
+`PUT /api/collections/{collection_id}`
+```json
+{
+  "name": "Design Tokens & Systems",
+  "origin_urls": ["http://localhost:3000", "https://app.example.com"]
+}
+```
+
+#### Publish Single-File HTML App
+`PUT /api/collections/{collection_id}/app`
+```json
+{
+  "html": "<!DOCTYPE html><html><body>...</body></html>"
+}
+```
+Response: `200 OK`
+```json
+{
+  "collection_id": "550e8400-e29b-41d4-a716-446655440000",
+  "slug": "550e8400e29b41d4a716446655440000",
+  "app_url": "https://550e8400e29b41d4a716446655440000.vibebac.kr",
+  "origin_urls": ["https://550e8400e29b41d4a716446655440000.vibebac.kr"],
+  "message": "Application published successfully at https://550e8400e29b41d4a716446655440000.vibebac.kr"
+}
+```
+
+#### Delete Collection
+`DELETE /api/collections/{collection_id}`
+Response: `200 OK`
+```json
+{ "message": "collection deleted successfully", "id": "col_123" }
+```
+
+### 4.3 Records
+
+#### Create Record
+`POST /api/collections/{collection_id}/records`
+```json
+{
+  "title": "Button Component Spec",
+  "content": "Variants: primary, secondary, ghost. Supports loading spinner.",
+  "data": {
+    "status": "ready",
+    "figma_url": "https://figma.com/file/123",
+    "version": 2
+  },
+  "access_policy": {
+    "visibility": "shared",
+    "shares": ["designer@company.com"]
+  }
+}
+```
+Response: `201 Created` (`VibeRecord`)
+
+#### Query Records
+`GET /api/collections/{collection_id}/records`
+Response: `200 OK` (`VibeRecord[]`)
+
+#### Get Record
+`GET /api/collections/{collection_id}/records/{record_id}`
+Response: `200 OK` (`VibeRecord`)
+
+#### Update Record
+`PUT /api/collections/{collection_id}/records/{record_id}`
+```json
+{
+  "title": "Button Component Spec (v2.1)",
+  "data": { "status": "approved" }
+}
+```
+
+#### Delete Record
+`DELETE /api/collections/{collection_id}/records/{record_id}`
+Response: `200 OK`
+```json
+{ "message": "record deleted" }
+```
+
+#### Hybrid Vector & Keyword Search
+`POST /api/collections/{collection_id}/search`
+```json
+{
+  "query": "accessible buttons and loading states",
+  "limit": 10
+}
+```
+Response: `200 OK`
+```json
+[
+  {
+    "record": {
+      "id": "rec_abc",
+      "collection_id": "col_123",
+      "title": "Button Component Spec",
+      "content": "Variants: primary, secondary, ghost...",
+      "data": "{\"status\":\"ready\"}"
+    },
+    "score": 0.892,
+    "method": "vector"
+  }
+]
+```
+
+### 4.4 Authentication & Token Management
+
+#### OAuth Identity Provider Endpoints
+- `GET /auth/login/google` - Initiates Google OAuth 2.0 flow (supports `?popup=true` or `?redirect_uri=...`)
+- `GET /auth/login/github` - Initiates GitHub OAuth flow
+- `GET /auth/login/oidc` - Initiates enterprise OIDC flow
+- `GET /auth/login/mock` - Instant development login (when `ENABLE_MOCK_AUTH=true`)
+
+#### Transparent Token Refresh
+`POST /oauth/token` (`Content-Type: application/x-www-form-urlencoded`)
+Request body:
+```text
+grant_type=refresh_token&refresh_token=...
+```
+Response: `200 OK`
+```json
+{
+  "access_token": "...",
+  "refresh_token": "...",
+  "token_type": "Bearer",
+  "expires_in": 900
+}
+```
+
+---
+
+## 5. Browser SDK (`vibebackr.js`) API Reference
+
+Loaded via `<script src="https://vibebac.kr/vibebackr.js"></script>` (or short alias `<script src="https://vibebac.kr/vibe.js"></script>`).
+
+### 5.1 Initialization & Options
+```javascript
+//constructor style (with optional default collectionId)
+const vibe = new VibeBackr({
+    baseUrl: 'https://vibebac.kr',
+    collectionId: 'YOUR_COL_ID',
+    tokenKey: 'vb_token',
+    refreshTokenKey: 'vb_refresh_token',
+    useRelay: false,
+    relayUrl: 'https://vibebac.kr/relay'
+});
+
+//or factory style
+const client = createVibeClient('https://vibebac.kr', {collectionId: 'YOUR_COL_ID'});
+```
+
+### 5.2 Authentication Methods
+- `vibe.login(provider = 'google')`: Opens OAuth popup, receives token via `postMessage`, saves to storage.
+- `vibe.loginWithGoogle()`: Alias for `vibe.login('google')`.
+- `vibe.loginWithGitHub()`: Alias for `vibe.login('github')`.
+- `vibe.loginMock()`: Alias for `vibe.login('mock')`.
+- `vibe.getLoginUrl(provider = 'google', redirectUri?)`: Returns full-page redirect URL.
+- `vibe.handleAuthCallback()`: Extracts `access_token` and `refresh_token` from URL hash after redirect.
+- `vibe.getToken()` / `vibe.setToken(token, refreshToken?)`: Get or set active credentials.
+- `vibe.refreshToken()`: Manually rotate access and refresh tokens.
+- `vibe.logout()`: Revokes refresh token and clears local session.
+- `vibe.revokeAllSessions()`: Increments user `token_version` and invalidates all active sessions.
+- `vibe.listProviders()`: Lists active SSO providers (`['google', ...]`).
+
+### 5.3 Tenant & Collection Methods
+- `vibe.listTenants()`
+- `vibe.createTenant()`
+- `vibe.leaveTenant(tenantId)`
+- `vibe.listCollections()` (alias: `vibe.getCollections()`)
+- `vibe.createCollection({name, default_visibility, origin_urls, vector_search_enabled, records})`
+- `vibe.getCollection(collectionId?)`
+- `vibe.updateCollection(collectionId, updates)`
+- `vibe.deleteCollection(collectionId)`
+
+### 5.4 Record & Search Methods
+All record and search methods accept `(collectionId, ...)` or use the client's configured `collectionId` when omitted:
+- `vibe.listRecords(collectionId?)` (alias: `vibe.getRecords(collectionId?)`)
+- `vibe.getRecord(collectionId, recordId)` or `vibe.getRecord(recordId)`
+- `vibe.createRecord(collectionId, payload)` or `vibe.createRecord(payload, collectionId?)`
+- `vibe.updateRecord(collectionId, recordId, payload)` or `vibe.updateRecord(recordId, payload, collectionId?)`
+- `vibe.deleteRecord(collectionId, recordId)` or `vibe.deleteRecord(recordId)`
+- `vibe.searchRecords(collectionId, query, limit?)` or `vibe.searchRecords(query, limit?)` (alias: `vibe.search(...)`)
+
+### 5.5 Automatic 401 Interception & Refresh
+The SDK wraps all API requests with an automatic 401 interceptor. When a token expires:
+1. It pauses pending requests behind a deduplicated refresh lock.
+2. Calls `POST /oauth/token` with `grant_type=refresh_token`.
+3. Updates `localStorage` with the new access and refresh tokens.
+4. Transparently retries all failed requests without throwing an error to client code.
+
+---
+
+## 6. CSP Bypass Relay Architecture (`/relay` / `/relay.html`)
+
+When web apps are loaded in restrictive sandbox environments (e.g. Claude artifacts, CodePen, restricted enterprise iframes) where `connect-src` blocks `https://vibebac.kr`:
+
+1. The client loads `https://vibebac.kr/relay` in a hidden `<iframe>`.
+2. The client SDK communicates with the relay using bidirectional `window.postMessage`:
+   - Outgoing: `{type: 'vb_relay_request', id: '...', path: '...', method: '...', headers: {...}, body: '...'}`
+   - Response: `{type: 'vb_relay_response', id: '...', ok: true, status: 200, data: {...}}`
+3. The relay page executes the `fetch()` within its own origin (`https://vibebac.kr`) and returns the payload back over `postMessage`.
+
+The SDK falls back to the relay automatically if `fetch()` throws a `TypeError`, or you can initialize it explicitly:
+```javascript
+const vibe = new VibeBackr({
+    collectionId: 'my_col',
+    useRelay: true
+});
+vibe.initRelay().then(() => vibe.listRecords());
+```
+
+

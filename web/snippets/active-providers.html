@@ -1,0 +1,48 @@
+<div id="active-providers-container" class="agent-prompt-box" style="margin: 28px 0; max-width: none;">
+    <div class="agent-prompt-header">
+        <span class="agent-prompt-title">Active Identity Providers</span>
+        <span class="console__meta">GET /api/auth/providers</span>
+    </div>
+    <div id="active-providers-list" class="provider__list">
+        <span class="console__meta">Checking active providers...</span>
+    </div>
+</div>
+<script>
+    (function loadActiveProviders() {
+        const container = document.getElementById('active-providers-list');
+        if(!container) {
+            return;
+        }
+        fetch('/api/auth/providers')
+            .then(res => {
+                if(!res.ok) {
+                    container.innerHTML = '<span class="provider__pill"><strong>Google</strong> <code>google</code></span>';
+                    return null;
+                }
+                return res.json();
+            })
+            .then(data => {
+                if(!data) {
+                    return;
+                }
+                const details = (Array.isArray(data.provider_details) && data.provider_details.length > 0)
+                    ? data.provider_details
+                    : (data.providers || []).map(p => ({name: p, icon_url: ''}));
+                if(details.length < 1) {
+                    container.innerHTML = '<span class="console__meta">No third-party SSO providers currently configured.</span>';
+                    return;
+                }
+                container.innerHTML = details.map(item => {
+                    const p = String((item && item.name) || '');
+                    const cap = p.charAt(0).toUpperCase() + p.slice(1);
+                    const icon = (item && item.icon_url)
+                        ? `<img src="${item.icon_url}" alt="" width="14" height="14" style="vertical-align: -2px;"/> `
+                        : '';
+                    return `<span class="provider__pill">${icon}<strong>${cap}</strong> <code>${p}</code></span>`;
+                }).join('');
+            })
+            .catch(() => {
+                container.innerHTML = '<span class="provider__pill"><strong>Google</strong> <code>google</code></span>';
+            });
+    })();
+</script>

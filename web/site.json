@@ -1,0 +1,46 @@
+{
+  "name": "vibebackr",
+  "title": "VibeBackr",
+  "tagline": "turn what you build in AI chat into a real app anyone can use",
+  "description": "Give any tool you build in Claude or ChatGPT its own live web link, Google sign-in, and cloud memory that stays saved - zero coding or servers required.",
+  "url": "https://vibebac.kr",
+  "mcpUrl": "https://vibebac.kr/mcp",
+  "github": "https://github.com/eliotstocker/vibebackr",
+  "favicon": "/logo.svg",
+  "logo": "/logo.svg",
+  "cssHref": "/style.css",
+  "cssOut": "style.css",
+  "copy": [
+    "logo.svg",
+    "logo.png",
+    "logo-dark.png",
+    "favicon.svg",
+    "relay.html",
+    "vibebackr.js",
+    "vibebackr.d.ts",
+    "vibe.js",
+    "vibe.d.ts",
+    "llms-full.txt",
+    "vibebackr.mcpb"
+  ],
+  "features": [
+    "Instant live web address (your-app.vibebac.kr) for any AI-built tool",
+    "Permanent cloud memory that stays saved across phones and laptops",
+    "1-click Google & GitHub sign-in with zero setup",
+    "Private, email-shared (with auto-invites), or public access",
+    "Team workspaces and automatic manager access for work tools",
+    "1-click Claude extension & works with ChatGPT, Gemini, and Cursor"
+  ],
+  "theme": {
+    "mode": "light",
+    "gradientFrom": "#6366f1",
+    "gradientTo": "#06b6d4"
+  },
+  "nav": [
+    {"label": "How It Works", "href": "/#how-it-works"},
+    {"label": "What It Is", "href": "/#what-is-it"},
+    {"label": "Pricing", "href": "/#pricing"},
+    {"label": "For Nerds", "href": "/nerds"},
+    {"label": "Sign In", "href": "/login", "primary": true}
+  ]
+}

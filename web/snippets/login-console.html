@@ -1,0 +1,1590 @@
+<div id="authHeroActions" class="auth__hero">
+    <div id="loadingView" class="console__meta" style="margin-top: 28px;">
+        Checking session...
+    </div>
+
+    <div id="signInView" style="display: none;">
+        <div id="providerButtonsRow" class="cta-row">
+            <a id="btnGoogleLogin" href="/auth/login/google" class="btn btn-primary">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" width="16" height="16"/>
+                Continue with Google
+            </a>
+            <a id="btnSignUpLink" href="#" class="btn">Create New Workspace</a>
+        </div>
+        <p id="mockAuthHint" class="console__meta" style="display: none; margin-top: 12px;"></p>
+    </div>
+
+    <div id="oauthConsentView" style="display: none;">
+        <div class="agent-prompt-box auth__box">
+            <div class="agent-prompt-header">
+                <span class="agent-prompt-title">OAuth Authorization Request</span>
+                <span class="console__meta" id="oauthTenantPill">Tenant: ...</span>
+            </div>
+            <div class="auth__user-row" id="oauthUserBadge">
+                <span class="console__tag" id="oauthUserInitial">U</span>
+                <span class="auth__user-email" id="oauthUserEmail">user@example.com</span>
+            </div>
+            <ul class="auth__permissions">
+                <li>Access and manage collections in your workspace</li>
+                <li>Execute Model Context Protocol (MCP) tools</li>
+                <li>Store and query records via semantic vector search</li>
+            </ul>
+            <div class="cta-row" style="justify-content: flex-start; margin-top: 20px;">
+                <button id="btnAuthorize" class="btn btn-primary">Authorize Access</button>
+                <button id="btnSwitchAccount" class="btn">Switch Account</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="notRegisteredView" style="display: none;">
+        <div class="agent-prompt-box auth__box">
+            <div class="agent-prompt-header">
+                <span class="agent-prompt-title">Unregistered Account</span>
+                <span class="console__meta" id="notRegisteredEmail">user@example.com</span>
+            </div>
+            <p id="notRegisteredExplanation" class="auth__copy">
+                You tried to sign in with an email address that has not been registered yet. Create a new workspace to finish connecting to the MCP server.
+            </p>
+            <div class="cta-row" style="justify-content: flex-start; margin-top: 20px;">
+                <a id="btnCreateWorkspace" href="#" class="btn btn-primary">Create Workspace &amp; Sign Up</a>
+                <button id="btnTryDifferentAccount" class="btn">Try Different Account</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="consoleHeroBar" style="display: none;">
+        <div class="console__identity-bar">
+            <span class="console__tag" id="consoleUserInitial">U</span>
+            <strong id="consoleUserName">User</strong>
+            <span class="console__meta" id="consoleUserEmail">user@example.com</span>
+            <span class="console__pill" id="consoleTenantPill">Tenant: ...</span>
+        </div>
+        <div class="cta-row" style="margin-top: 20px;">
+            <button id="btnOpenCreateModal" class="btn btn-primary">+ New Collection / Import JSON</button>
+            <a href="/vibebackr.mcpb" download="vibebackr.mcpb" class="btn">Download Claude .mcpb</a>
+            <button id="btnConsoleSignOut" class="btn">Sign Out</button>
+            <button id="btnSignOutAll" class="btn danger">Revoke All Sessions</button>
+        </div>
+    </div>
+
+    <div id="errorView" style="display: none; margin-top: 16px;">
+        <p id="errorText" class="console__error"></p>
+    </div>
+</div>
+</section>
+
+<div id="userConsoleView" style="display: none;">
+    <section id="workspace-billing" style="display: none;">
+        <h2>Workspace Plan &amp; Billing</h2>
+        <p id="billingSubtitle">Manage your tenant collection quota, Direct Debit subscription, or voucher code.</p>
+        <div class="agent-prompt-box" style="max-width: none; margin-top: 20px;">
+            <div class="agent-prompt-header" style="flex-wrap: wrap; gap: 8px;">
+                <span class="agent-prompt-title" id="billingPlanBadge">Starter Trial</span>
+                <span class="console__pill" id="billingQuotaBadge">0 / 10 collections</span>
+            </div>
+            <p id="billingStatusCopy" style="margin: 8px 0 16px; font-size: 0.9rem; color: var(--muted);"></p>
+            <div class="cta-row" id="billingActionsRow" style="justify-content: flex-start; gap: 10px; flex-wrap: wrap; margin-bottom: 16px;">
+                <button type="button" id="btnActivateStarter" class="btn sm btn-primary" style="display: none;">Activate Starter (£3/mo · 10 Collections)</button>
+                <button type="button" id="btnUpgradePro" class="btn sm btn-primary" style="display: none;">Upgrade to Pro (£5/mo · 25 Collections)</button>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 14px;">
+                <input type="text" id="voucherCodeInput" class="form__input" placeholder="Have a voucher code?" style="max-width: 240px; padding: 6px 10px; font-size: 0.85rem;"/>
+                <button type="button" id="btnRedeemVoucher" class="btn sm">Redeem Voucher</button>
+                <span id="billingFeedbackMsg" class="console__meta" style="display: none;"></span>
+            </div>
+        </div>
+    </section>
+
+    <section id="workspace-collections">
+        <h2>Collections (<span id="collectionsCount">0</span>)</h2>
+        <p>Isolated document collections and vector indexes accessible to your MCP agents and web apps.</p>
+        <div id="collectionsListContainer" class="collection__list">
+            <div class="console__meta" style="padding: 24px 0;">Loading collections...</div>
+        </div>
+    </section>
+
+    <section id="workspace-invites">
+        <h2>Team &amp; Workspace Invites</h2>
+        <p>Invite collaborators to your workspace. Admins and managers can create collections and manage records; members can read and create records in shared collections.</p>
+        <div class="agent-prompt-box" style="max-width: none; margin-top: 20px;">
+            <form id="createInviteForm" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="email" id="inviteEmailInput" class="form__input" placeholder="collaborator@example.com" required style="flex: 1; min-width: 220px; padding: 8px 12px;"/>
+                <select id="inviteRoleSelect" class="form__select" style="width: auto; min-width: 190px; padding: 8px 12px;">
+                    <option value="admin">Admin (can create collections)</option>
+                    <option value="manager">Manager (can create collections)</option>
+                    <option value="member">Member (collections &amp; records)</option>
+                </select>
+                <button type="submit" id="btnSendInvite" class="btn btn-primary sm">Invite Collaborator</button>
+            </form>
+            <div id="inviteFeedbackMsg" class="console__meta" style="display: none; margin-top: 10px;"></div>
+            <div id="invitesListContainer" style="margin-top: 16px; border-top: 1px solid var(--border); padding-top: 12px;">
+                <div class="console__meta">Loading invites...</div>
+            </div>
+        </div>
+    </section>
+
+    <section id="workspace-token">
+        <details class="panel">
+            <summary class="panel__summary">
+                <span class="panel__label">
+                    <span class="panel__eyebrow">// ADVANCED</span>
+                    <span>Developer &amp; CLI Token Access</span>
+                </span>
+                <span class="console__meta panel__hint">Personal Access Token</span>
+            </summary>
+            <div class="panel__body">
+                <p class="panel__copy">
+                    Web apps and AI agents should authenticate with built-in OAuth (<code>vibe.loginWithGoogle()</code> or MCP browser login) rather than copying tokens around. Only use this Personal Access Token for headless scripts, <code>curl</code>, or local testing.
+                </p>
+                <div class="agent-prompt-box" style="max-width: none; margin-top: 14px;">
+                    <div class="agent-prompt-header">
+                        <span class="agent-prompt-title">Authorization Header</span>
+                        <button type="button" id="btnCopyToken" class="copy-text-btn">Copy Token</button>
+                    </div>
+                    <pre class="agent-prompt-content console__token-preview" id="tokenDisplay">Loading token...</pre>
+                </div>
+            </div>
+        </details>
+    </section>
+</div>
+
+<div id="createCollectionModal" class="modal" style="display: none;">
+    <div class="modal__content">
+        <div class="modal__header">
+            <div>
+                <div class="modal__eyebrow">// NEW COLLECTION</div>
+                <h3>Create or Import Collection</h3>
+            </div>
+            <button id="btnCloseCreateModal" class="modal__close" aria-label="Close">&times;</button>
+        </div>
+
+        <div id="targetTenantGroup" class="form__group" style="display: none; margin-bottom: 14px;">
+            <label for="formTargetTenant">Target Workspace (Tenant)</label>
+            <select id="formTargetTenant" class="form__select"></select>
+        </div>
+
+        <div class="modal__tabs">
+            <button id="tabJsonImportBtn" class="modal__tab active">Import JSON (Gemini / AI)</button>
+            <button id="tabStandardFormBtn" class="modal__tab">Standard Form</button>
+        </div>
+
+        <div id="tabJsonImportView">
+            <div class="agent-prompt-box" style="margin: 0 0 18px; max-width: none;">
+                <div class="agent-prompt-header" style="margin-bottom: 4px;">
+                    <span class="agent-prompt-title">Working with Gemini or ChatGPT?</span>
+                    <button type="button" id="btnCopyGeminiPrompt" class="copy-text-btn">Copy Prompt</button>
+                </div>
+                <p style="margin: 0; font-size: 0.84rem; color: var(--muted);">
+                    Copy the schema prompt into Gemini or ChatGPT, then paste the generated JSON configuration below.
+                </p>
+            </div>
+
+            <div class="form__group">
+                <label for="jsonConfigInput">Collection Configuration JSON (with optional seed records)</label>
+                <textarea id="jsonConfigInput" class="form__textarea" spellcheck="false"></textarea>
+            </div>
+
+            <div id="jsonImportError" class="console__error" style="margin-bottom: 12px; display: none;"></div>
+
+            <div class="modal__actions">
+                <button id="btnCancelJsonModal" class="btn">Cancel</button>
+                <button id="btnSubmitJsonImport" class="btn btn-primary">Create Collection &amp; Seed Records</button>
+            </div>
+        </div>
+
+        <div id="tabStandardFormView" style="display: none;">
+            <form id="createCollectionForm">
+                <div class="form__group">
+                    <label for="formColName">Collection Name *</label>
+                    <input type="text" id="formColName" class="form__input" placeholder="e.g. tasks, customers, notes" required/>
+                </div>
+
+                <div class="form__group">
+                    <label for="formColVis">Default Visibility</label>
+                    <select id="formColVis" class="form__select">
+                        <option value="private">Private (owner &amp; managers only)</option>
+                        <option value="public">Public (anyone can read)</option>
+                        <option value="shared">Shared (explicitly shared emails)</option>
+                    </select>
+                </div>
+
+                <div class="form__group">
+                    <label for="formColOrigins">Allowed Origin URLs (comma-separated or * for any)</label>
+                    <input type="text" id="formColOrigins" class="form__input" value="*" placeholder="e.g. http://localhost:3000, https://myapp.com"/>
+                </div>
+
+                <div class="form__group form__checkbox-row">
+                    <input type="checkbox" id="formColVector"/>
+                    <label for="formColVector">Enable 768-d Vector Semantic Search (EmbeddingGemma 2)</label>
+                </div>
+
+                <div class="form__group form__checkbox-row">
+                    <input type="checkbox" id="formColAutoInvite"/>
+                    <label for="formColAutoInvite">Auto-invite non-users when records are shared with them</label>
+                </div>
+
+                <div id="formCreateError" class="console__error" style="margin-bottom: 12px; display: none;"></div>
+
+                <div class="modal__actions">
+                    <button type="button" id="btnCancelFormModal" class="btn">Cancel</button>
+                    <button type="submit" id="btnSubmitFormCreate" class="btn btn-primary">Create Collection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div id="recordsModal" class="modal" style="display: none;">
+    <div class="modal__content" style="max-width: 780px;">
+        <div class="modal__header">
+            <div>
+                <div class="modal__eyebrow" id="recordsModalSubtitle">// COLLECTION</div>
+                <h3 id="recordsModalTitle">Collection Records</h3>
+            </div>
+            <button id="btnCloseRecordsModal" class="modal__close" aria-label="Close">&times;</button>
+        </div>
+
+        <div class="records__toolbar">
+            <span class="console__meta" id="recordsCountText">0 records</span>
+            <button id="btnToggleAddRecord" class="btn sm">+ Add Record</button>
+        </div>
+
+        <div id="addRecordBox" class="agent-prompt-box" style="display: none; margin: 0 0 20px; max-width: none;">
+            <div class="agent-prompt-header">
+                <span class="agent-prompt-title">New Record</span>
+            </div>
+            <div class="form__group">
+                <label for="newRecTitle">Title *</label>
+                <input type="text" id="newRecTitle" class="form__input" placeholder="Record title"/>
+            </div>
+            <div class="form__group">
+                <label for="newRecContent">Content (optional markdown or notes)</label>
+                <input type="text" id="newRecContent" class="form__input" placeholder="Notes or text content"/>
+            </div>
+            <div class="form__group">
+                <label for="newRecData">Data Payload (JSON object)</label>
+                <textarea id="newRecData" class="form__textarea" style="min-height: 84px;" placeholder='{ "status": "active" }'></textarea>
+            </div>
+            <div class="modal__actions">
+                <button id="btnCancelAddRecord" class="btn sm">Cancel</button>
+                <button id="btnSaveRecord" class="btn btn-primary sm">Save Record</button>
+            </div>
+        </div>
+
+        <div id="recordsListContainer" class="records__list">
+            <div class="console__meta" style="padding: 20px 0; text-align: center;">Loading records...</div>
+        </div>
+    </div>
+</div>
+
+<section style="display: none;" aria-hidden="true">
+<script>
+    (function() {
+        const TOKEN_KEY = 'vibebackr_token';
+        const REFRESH_TOKEN_KEY = 'vibebackr_refresh_token';
+
+        const navHeader = document.querySelector('header.nav');
+        if(navHeader && window.location.hostname !== 'vibebac.kr' && window.location.hostname !== 'www.vibebac.kr') {
+            navHeader.style.display = 'none';
+        }
+
+        const heroH1 = document.querySelector('.hero h1');
+        const heroP = document.querySelector('.hero > p');
+
+        function setHeroCopy(title, subtitle) {
+            if(heroH1) {
+                heroH1.textContent = title;
+            }
+            if(heroP) {
+                heroP.textContent = subtitle;
+            }
+        }
+
+        //process url hash returned from sso callback
+        let justSignedInViaSSO = false;
+        if(window.location.hash) {
+            const hashParams = new URLSearchParams(window.location.hash.substring(1));
+            const tokenFromHash = hashParams.get('access_token');
+            const refreshFromHash = hashParams.get('refresh_token');
+            if(tokenFromHash) {
+                localStorage.setItem(TOKEN_KEY, tokenFromHash);
+                justSignedInViaSSO = true;
+            }
+            if(refreshFromHash) {
+                localStorage.setItem(REFRESH_TOKEN_KEY, refreshFromHash);
+            }
+            if(tokenFromHash || refreshFromHash) {
+                history.replaceState(null, null, window.location.pathname + window.location.search);
+            }
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const clientId = params.get('client_id');
+        const redirectUri = params.get('redirect_uri');
+        const codeChallenge = params.get('code_challenge');
+        const codeChallengeMethod = params.get('code_challenge_method') || 'plain';
+        const state = params.get('state') || '';
+
+        const isOAuthFlow = Boolean(clientId && redirectUri);
+        const session = {
+            token: localStorage.getItem(TOKEN_KEY),
+            refreshToken: localStorage.getItem(REFRESH_TOKEN_KEY)
+        };
+
+        function parseJwt(t) {
+            try {
+                const base64Url = t.split('.')[1];
+                const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+                const jsonPayload = decodeURIComponent(
+                    atob(base64)
+                        .split('')
+                        .map(c => `%${(`00${c.charCodeAt(0).toString(16)}`).slice(-2)}`)
+                        .join('')
+                );
+                return JSON.parse(jsonPayload);
+            } catch(e) {
+                return null;
+            }
+        }
+
+        function hideAll() {
+            document.getElementById('loadingView').style.display = 'none';
+            document.getElementById('oauthConsentView').style.display = 'none';
+            document.getElementById('signInView').style.display = 'none';
+            document.getElementById('userConsoleView').style.display = 'none';
+            document.getElementById('consoleHeroBar').style.display = 'none';
+            document.getElementById('notRegisteredView').style.display = 'none';
+        }
+
+        function showError(msg) {
+            const errEl = document.getElementById('errorView');
+            document.getElementById('errorText').textContent = msg;
+            errEl.style.display = 'block';
+        }
+
+        const currentUrl = window.location.href;
+        document.getElementById('btnGoogleLogin').href = `/auth/login/google?redirect_uri=${encodeURIComponent(currentUrl)}`;
+        document.getElementById('btnSignUpLink').href = `/auth/login/google?signup=true&redirect_uri=${encodeURIComponent(currentUrl)}`;
+
+        function escapeHtml(str) {
+            if(!str) {
+                return '';
+            }
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                "'": '&#39;',
+                '"': '&quot;'
+            }[tag] || tag));
+        }
+
+        function defaultProviderMeta(provider) {
+            if(provider === 'google') {
+                return {
+                    name: 'google',
+                    label: 'Continue with Google',
+                    icon_url: 'https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg'
+                };
+            }
+            if(provider === 'github') {
+                return {
+                    name: 'github',
+                    label: 'Continue with GitHub',
+                    icon_url: 'https://github.githubassets.com/favicons/favicon-dark.svg'
+                };
+            }
+            if(provider === 'mock') {
+                return {
+                    name: 'mock',
+                    label: 'Continue as Local Dev (Mock)',
+                    icon_url: '/logo.svg'
+                };
+            }
+            return {
+                name: provider,
+                label: `Continue with ${provider.toUpperCase()}`,
+                icon_url: '/logo.svg'
+            };
+        }
+
+        function loadAuthProviders() {
+            return fetch('/api/auth/providers')
+                .then(res => res.ok ? res.json() : null)
+                .then(data => {
+                    const details = (data && Array.isArray(data.provider_details) && data.provider_details.length > 0)
+                        ? data.provider_details
+                        : ((data && Array.isArray(data.providers) && data.providers.length > 0)
+                            ? data.providers.map(defaultProviderMeta)
+                            : [defaultProviderMeta('google')]);
+
+                    const row = document.getElementById('providerButtonsRow');
+                    const signUpBtn = document.getElementById('btnSignUpLink');
+                    const mockHint = document.getElementById('mockAuthHint');
+                    if(!row || !signUpBtn) {
+                        return;
+                    }
+
+                    const googleItem = details.find(d => d && d.name === 'google');
+                    const primaryProvider = googleItem ? 'google' : String(details[0].name || 'google').replace(/[^a-zA-Z0-9_-]/g, '');
+                    signUpBtn.href = `/auth/login/${encodeURIComponent(primaryProvider)}?signup=true&redirect_uri=${encodeURIComponent(currentUrl)}`;
+
+                    row.querySelectorAll('a:not(#btnSignUpLink)').forEach(el => el.remove());
+
+                    details.forEach((item, idx) => {
+                        const cleanProv = String((item && item.name) || '').replace(/[^a-zA-Z0-9_-]/g, '');
+                        if(!cleanProv) {
+                            return;
+                        }
+                        const fallback = defaultProviderMeta(cleanProv);
+                        const label = (item && item.label) ? item.label : fallback.label;
+                        const iconUrl = (item && item.icon_url) ? item.icon_url : fallback.icon_url;
+
+                        const a = document.createElement('a');
+                        if(idx < 1) {
+                            a.id = 'btnGoogleLogin';
+                        }
+                        a.href = `/auth/login/${encodeURIComponent(cleanProv)}?redirect_uri=${encodeURIComponent(currentUrl)}`;
+                        a.className = idx < 1 ? 'btn btn-primary' : 'btn';
+                        const iconHtml = iconUrl
+                            ? `<img src="${escapeHtml(iconUrl)}" alt="" width="16" height="16"/> `
+                            : '';
+                        a.innerHTML = `${iconHtml}${escapeHtml(label)}`;
+                        row.insertBefore(a, signUpBtn);
+                    });
+
+                    if(mockHint) {
+                        if(details.length === 1 && details[0].name === 'mock') {
+                            mockHint.textContent = 'Local dev mode active (signs in as developer@example.com). Set GOOGLE_CLIENT_ID or GITHUB_CLIENT_ID for real SSO.';
+                            mockHint.style.display = 'block';
+                        } else {
+                            mockHint.style.display = 'none';
+                        }
+                    }
+                })
+                .catch(() => null);
+        }
+
+        function resolveClientName(cid) {
+            if(!cid) {
+                return Promise.resolve('');
+            }
+            return fetch(`/oauth/client-info?client_id=${encodeURIComponent(cid)}`)
+                .then(cRes => cRes.ok ? cRes.json() : null)
+                .then(cData => (cData && cData.client_name) ? cData.client_name : cid)
+                .catch(() => cid);
+        }
+
+        if(params.get('error') === 'not_registered') {
+            hideAll();
+            const email = params.get('email') || 'your account';
+            const provider = (params.get('provider') || 'google').replace(/[^a-zA-Z0-9_-]/g, '');
+            const returnTo = params.get('return_to');
+            const collectionId = params.get('collection_id') || '';
+            const colSuffix = collectionId ? `&collection_id=${encodeURIComponent(collectionId)}` : '';
+            const isPopupFlow = params.get('popup') === 'true';
+            const isAppLogin = params.get('app') === 'true'
+                || Boolean(returnTo)
+                || Boolean(collectionId)
+                || isPopupFlow;
+
+            resolveClientName(clientId).then(clientName => {
+                document.getElementById('notRegisteredEmail').textContent = email;
+
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete('error');
+                cleanUrl.searchParams.delete('email');
+                cleanUrl.searchParams.delete('provider');
+                cleanUrl.searchParams.delete('app');
+                cleanUrl.searchParams.delete('popup');
+                cleanUrl.searchParams.delete('return_to');
+                cleanUrl.searchParams.delete('collection_id');
+
+                const tryDifferentAccount = () => {
+                    localStorage.removeItem(TOKEN_KEY);
+                    localStorage.removeItem(REFRESH_TOKEN_KEY);
+                    if(isPopupFlow) {
+                        window.location.href = `/auth/login/${encodeURIComponent(provider)}?popup=true${colSuffix}&prompt=select_account`;
+                    } else if(returnTo) {
+                        window.location.href = `/auth/login/${encodeURIComponent(provider)}?redirect_uri=${encodeURIComponent(returnTo)}${colSuffix}&prompt=select_account`;
+                    } else {
+                        window.location.href = `/auth/login/${encodeURIComponent(provider)}?redirect_uri=${encodeURIComponent(cleanUrl.toString())}${colSuffix}&prompt=select_account`;
+                    }
+                };
+
+                if(isAppLogin && !isOAuthFlow) {
+                    const titleEl = document.querySelector('#notRegisteredView .agent-prompt-title');
+                    if(titleEl) {
+                        titleEl.textContent = 'Invite Required';
+                    }
+                    setHeroCopy('Access Denied', 'An invitation is required to access this application.');
+                    document.getElementById('notRegisteredExplanation').innerHTML =
+                        `You signed in with <strong>${escapeHtml(email)}</strong>, but this application is private and requires an invitation from the workspace administrator.`;
+                    document.getElementById('btnCreateWorkspace').style.display = 'none';
+                    document.getElementById('btnTryDifferentAccount').onclick = tryDifferentAccount;
+                } else if(isOAuthFlow) {
+                    setHeroCopy('Account Not Registered', `Cannot authorize ${clientName} yet.`);
+                    document.getElementById('notRegisteredExplanation').innerHTML =
+                        `You signed in with <strong>${escapeHtml(email)}</strong> to connect <strong>${escapeHtml(clientName)}</strong>, but no workspace exists for this address yet. Create a workspace to continue authorizing ${escapeHtml(clientName)}.`;
+                    document.getElementById('btnCreateWorkspace').textContent = `Create Workspace & Authorize ${clientName}`;
+                    const signupUrl = `/auth/login/${encodeURIComponent(provider)}?signup=true&redirect_uri=${encodeURIComponent(cleanUrl.toString())}`;
+                    document.getElementById('btnCreateWorkspace').href = signupUrl;
+                    document.getElementById('btnTryDifferentAccount').onclick = tryDifferentAccount;
+                } else {
+                    setHeroCopy('Account Not Registered', `No VibeBackr workspace found for ${email}.`);
+                    document.getElementById('notRegisteredExplanation').innerHTML =
+                        `No VibeBackr account or active invite was found for <strong>${escapeHtml(email)}</strong>. Create a new workspace to start building collections and connecting AI agents.`;
+                    document.getElementById('btnCreateWorkspace').textContent = 'Create Workspace & Sign Up';
+                    const signupUrl = `/auth/login/${encodeURIComponent(provider)}?signup=true&redirect_uri=${encodeURIComponent(cleanUrl.toString())}`;
+                    document.getElementById('btnCreateWorkspace').href = signupUrl;
+                    document.getElementById('btnTryDifferentAccount').onclick = tryDifferentAccount;
+                }
+
+                document.getElementById('notRegisteredView').style.display = 'block';
+            });
+            return;
+        }
+
+        function clearLocalSession() {
+            localStorage.removeItem(TOKEN_KEY);
+            localStorage.removeItem(REFRESH_TOKEN_KEY);
+            delete session.token;
+            delete session.refreshToken;
+            return null;
+        }
+
+        function attemptRefresh() {
+            if(!session.refreshToken) {
+                return Promise.resolve(null);
+            }
+            return fetch('/oauth/token', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: new URLSearchParams({
+                    grant_type: 'refresh_token',
+                    refresh_token: session.refreshToken
+                })
+            })
+                .then(rResp => {
+                    if(!rResp.ok) {
+                        return clearLocalSession();
+                    }
+                    return rResp.json().then(data => {
+                        session.token = data.access_token;
+                        localStorage.setItem(TOKEN_KEY, session.token);
+                        if(data.refresh_token) {
+                            session.refreshToken = data.refresh_token;
+                            localStorage.setItem(REFRESH_TOKEN_KEY, session.refreshToken);
+                        }
+                        return session.token;
+                    });
+                })
+                .catch(clearLocalSession);
+        }
+
+        function resolveCurrentUser() {
+            if(!session.token) {
+                return Promise.resolve(null);
+            }
+            const claims = parseJwt(session.token);
+            if(
+                claims
+                && (!claims.exp || claims.exp * 1000 > Date.now())
+            ) {
+                return fetch(`/api/users/${claims.sub}`, {
+                    headers: {Authorization: `Bearer ${session.token}`}
+                })
+                    .then(res => {
+                        if(res.status !== 401) {
+                            return res;
+                        }
+                        return attemptRefresh().then(refreshed => {
+                            if(!refreshed) {
+                                return res;
+                            }
+                            return fetch(`/api/users/${claims.sub}`, {
+                                headers: {Authorization: `Bearer ${refreshed}`}
+                            });
+                        });
+                    })
+                    .then(res => {
+                        if(res.ok) {
+                            return res.json();
+                        }
+                        localStorage.removeItem(TOKEN_KEY);
+                        delete session.token;
+                        return null;
+                    })
+                    .catch(() => null);
+            }
+
+            return attemptRefresh().then(refreshed => {
+                if(!refreshed) {
+                    return null;
+                }
+                const newClaims = parseJwt(refreshed);
+                if(!newClaims) {
+                    return null;
+                }
+                return fetch(`/api/users/${newClaims.sub}`, {
+                    headers: {Authorization: `Bearer ${refreshed}`}
+                })
+                    .then(res => res.ok ? res.json() : null)
+                    .catch(() => null);
+            });
+        }
+
+        function performSignOut() {
+            const rt = localStorage.getItem(REFRESH_TOKEN_KEY);
+            const logoutPromise = rt
+                ? fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: new URLSearchParams({refresh_token: rt})
+                }).catch(() => null)
+                : Promise.resolve();
+            return logoutPromise.then(() => {
+                clearLocalSession();
+                window.location.reload();
+            });
+        }
+
+        Promise.all([resolveCurrentUser(), loadAuthProviders()]).then(([user]) => {
+            if(isOAuthFlow) {
+                return resolveClientName(clientId).then(clientName => {
+                    if(!user) {
+                        hideAll();
+                        setHeroCopy(`Sign In to Authorize ${clientName}`, `Authenticate your account to grant access to ${clientName}.`);
+                        document.getElementById('signInView').style.display = 'block';
+                        return;
+                    }
+
+                    hideAll();
+                    setHeroCopy(`Authorize ${clientName}`, `${clientName} is requesting access to your VibeBackr workspace.`);
+                    document.getElementById('oauthUserInitial').textContent = (user.name || user.email || 'U')[0].toUpperCase();
+                    document.getElementById('oauthUserEmail').textContent = user.email;
+                    document.getElementById('oauthTenantPill').textContent = `Tenant: ${user.tenant_id ? `${user.tenant_id.substring(0, 8)}...` : 'Personal'}`;
+                    document.getElementById('oauthConsentView').style.display = 'block';
+
+                    const btnAuthorize = document.getElementById('btnAuthorize');
+                    btnAuthorize.onclick = function() {
+                        btnAuthorize.disabled = true;
+                        btnAuthorize.textContent = 'Authorizing...';
+                        fetch('/oauth/authorize', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                Accept: 'application/json',
+                                Authorization: `Bearer ${session.token}`
+                            },
+                            body: JSON.stringify({
+                                client_id: clientId,
+                                redirect_uri: redirectUri,
+                                code_challenge: codeChallenge,
+                                code_challenge_method: codeChallengeMethod,
+                                state
+                            })
+                        })
+                            .then(resp => {
+                                if(!resp.ok) {
+                                    return resp.json().then(err => {
+                                        throw new Error(err.error || 'Authorization failed');
+                                    });
+                                }
+                                return resp.json();
+                            })
+                            .then(data => {
+                                window.location.href = data.redirect_uri;
+                            })
+                            .catch(err => {
+                                showError(err.message);
+                                btnAuthorize.disabled = false;
+                                btnAuthorize.textContent = 'Authorize Access';
+                            });
+                    };
+
+                    if(justSignedInViaSSO) {
+                        btnAuthorize.click();
+                    }
+
+                    document.getElementById('btnSwitchAccount').onclick = performSignOut;
+                });
+            }
+
+            if(!user) {
+                hideAll();
+                setHeroCopy('Sign In to VibeBackr', 'Manage your collections, agents, and multi-tenant workspace.');
+                document.getElementById('signInView').style.display = 'block';
+                return;
+            }
+
+            hideAll();
+            setHeroCopy('Workspace Console', 'Manage your collections, universal records, and team workspace.');
+            document.getElementById('consoleUserInitial').textContent = (user.name || user.email || 'U')[0].toUpperCase();
+            document.getElementById('consoleUserName').textContent = user.name || 'VibeBackr User';
+            document.getElementById('consoleUserEmail').textContent = user.email;
+            document.getElementById('consoleTenantPill').textContent = `Tenant: ${user.tenant_id ? user.tenant_id.substring(0, 8) : 'Personal'}`;
+
+            const tokenDisplayEl = document.getElementById('tokenDisplay');
+            if(tokenDisplayEl) {
+                tokenDisplayEl.textContent = `Authorization: Bearer ${session.token}`;
+            }
+            document.getElementById('btnCopyToken').onclick = function() {
+                navigator.clipboard.writeText(session.token).then(() => {
+                    const origText = this.textContent;
+                    this.textContent = 'Copied';
+                    setTimeout(() => {
+                        this.textContent = origText;
+                    }, 1600);
+                });
+            };
+
+            const sampleJson = {
+                name: 'tasks',
+                default_visibility: 'private',
+                origin_urls: ['*'],
+                vector_search_enabled: false,
+                auto_invite_shares: false,
+                records: [
+                    {
+                        title: 'Welcome to VibeBackr',
+                        content: 'Your ready-to-use cloud backend for AI agents.',
+                        data: {status: 'active', priority: 'high'}
+                    }
+                ]
+            };
+            const jsonTextarea = document.getElementById('jsonConfigInput');
+            if(jsonTextarea && !jsonTextarea.value) {
+                jsonTextarea.value = JSON.stringify(sampleJson, null, 2);
+            }
+
+            const geminiPromptText = `I am building an app using VibeBackr as my backend. Please generate a collection configuration JSON with seed records using this exact structure:
+{
+  "name": "<collection_name>",
+  "default_visibility": "private",
+  "origin_urls": ["*"],
+  "vector_search_enabled": false,
+  "auto_invite_shares": false,
+  "records": [
+    {
+      "title": "<sample title>",
+      "content": "<optional description>",
+      "data": {
+        "<key>": "<value>"
+      }
+    }
+  ]
+}
+Only output the valid JSON.`;
+
+            document.getElementById('btnCopyGeminiPrompt').onclick = function() {
+                navigator.clipboard.writeText(geminiPromptText).then(() => {
+                    const orig = this.textContent;
+                    this.textContent = 'Copied';
+                    setTimeout(() => {
+                        this.textContent = orig;
+                    }, 1600);
+                });
+            };
+
+            const tabJsonBtn = document.getElementById('tabJsonImportBtn');
+            const tabFormBtn = document.getElementById('tabStandardFormBtn');
+            const tabJsonView = document.getElementById('tabJsonImportView');
+            const tabFormView = document.getElementById('tabStandardFormView');
+
+            tabJsonBtn.onclick = () => {
+                tabJsonBtn.classList.add('active');
+                tabFormBtn.classList.remove('active');
+                tabJsonView.style.display = 'block';
+                tabFormView.style.display = 'none';
+            };
+            tabFormBtn.onclick = () => {
+                tabFormBtn.classList.add('active');
+                tabJsonBtn.classList.remove('active');
+                tabFormView.style.display = 'block';
+                tabJsonView.style.display = 'none';
+            };
+
+            const createModal = document.getElementById('createCollectionModal');
+            document.getElementById('btnOpenCreateModal').onclick = () => {
+                createModal.style.display = 'flex';
+            };
+            function closeCreateModal() {
+                createModal.style.display = 'none';
+                document.getElementById('jsonImportError').style.display = 'none';
+                document.getElementById('formCreateError').style.display = 'none';
+            }
+            document.getElementById('btnCloseCreateModal').onclick = closeCreateModal;
+            document.getElementById('btnCancelJsonModal').onclick = closeCreateModal;
+            document.getElementById('btnCancelFormModal').onclick = closeCreateModal;
+
+            function loadCollections() {
+                loadBillingStatus();
+                const container = document.getElementById('collectionsListContainer');
+                return fetch('/api/collections', {
+                    headers: {Authorization: `Bearer ${session.token}`}
+                })
+                    .then(res => {
+                        if(!res.ok) {
+                            throw new Error('Failed loading collections');
+                        }
+                        return res.json();
+                    })
+                    .then(cols => {
+                        document.getElementById('collectionsCount').textContent = cols.length.toString();
+
+                        if(!cols || cols.length < 1) {
+                            container.innerHTML = `
+                                <div class="agent-prompt-box" style="max-width: none; text-align: center; padding: 32px 20px;">
+                                    <div class="agent-prompt-title" style="margin-bottom: 6px;">No Collections Yet</div>
+                                    <p style="color: var(--muted); font-size: 0.9rem; max-width: 440px; margin: 0 auto 18px;">
+                                        Create your first collection via the standard form or import a JSON schema generated by Gemini or Claude.
+                                    </p>
+                                    <button class="btn btn-primary sm" onclick="document.getElementById('createCollectionModal').style.display='flex'">+ Create Collection</button>
+                                </div>
+                            `;
+                            return;
+                        }
+
+                        container.innerHTML = '';
+                        cols.forEach(col => {
+                            const row = document.createElement('div');
+                            row.className = 'collection__row';
+
+                            const isOwned = Boolean(
+                                user.tenant_id
+                                && col.tenant_id
+                                && col.tenant_id === user.tenant_id
+                            );
+                            const shortTenant = col.tenant_id ? col.tenant_id.substring(0, 8) : 'global';
+                            const tenantBadgeLabel = isOwned
+                                ? `Your Tenant (${escapeHtml(shortTenant)})`
+                                : (col.tenant_id ? `Tenant: ${escapeHtml(shortTenant)}` : 'Global');
+                            const tenantTag = `<span class="console__pill" title="Tenant ID: ${escapeHtml(col.tenant_id || 'global')}">${tenantBadgeLabel}</span>`;
+
+                            const vectorTag = col.vector_search_enabled ? '<span class="console__pill">768d vector</span>' : '';
+                            const autoInviteTag = col.auto_invite_shares ? '<span class="console__pill">auto-invite</span>' : '';
+                            const originsText = (col.origin_urls && col.origin_urls.length) ? col.origin_urls.join(', ') : '*';
+
+                            const dangerActionHtml = (isOwned || !col.tenant_id)
+                                ? `<button class="btn sm danger btn-delete-col" data-id="${col.id}" data-name="${escapeHtml(col.name)}">Delete</button>`
+                                : `<button class="btn sm danger btn-leave-tenant" data-tenant="${escapeHtml(col.tenant_id)}" data-name="${escapeHtml(col.name)}">Leave Tenant</button>`;
+
+                            row.innerHTML = `
+                                <div class="collection__meta">
+                                    <div class="collection__title-row">
+                                        <strong class="collection__name">${escapeHtml(col.name)}</strong>
+                                        <button type="button" class="console__pill collection__id-tag" title="Click to copy collection ID" data-id="${col.id}">${escapeHtml(col.id)}</button>
+                                        ${tenantTag}
+                                        <span class="console__pill">${escapeHtml(col.default_visibility)}</span>
+                                        ${vectorTag}
+                                        ${autoInviteTag}
+                                    </div>
+                                    <div class="console__meta">
+                                        origins: <code>${escapeHtml(originsText)}</code>
+                                    </div>
+                                </div>
+                                <div class="collection__actions">
+                                    <button class="btn sm btn-browse" data-id="${col.id}" data-name="${escapeHtml(col.name)}">Records</button>
+                                    <button class="btn sm btn-copy-code" data-id="${col.id}" data-name="${escapeHtml(col.name)}">Copy SDK</button>
+                                    ${dangerActionHtml}
+                                </div>
+                            `;
+                            container.appendChild(row);
+                        });
+
+                        container.querySelectorAll('.collection__id-tag').forEach(tag => {
+                            tag.onclick = function() {
+                                const id = this.getAttribute('data-id');
+                                navigator.clipboard.writeText(id).then(() => {
+                                    const orig = tag.textContent;
+                                    tag.textContent = 'Copied!';
+                                    setTimeout(() => {
+                                        tag.textContent = orig;
+                                    }, 1400);
+                                });
+                            };
+                        });
+
+                        container.querySelectorAll('.btn-copy-code').forEach(btn => {
+                            btn.onclick = function() {
+                                const colId = this.getAttribute('data-id');
+                                const code = `import {createVibeClient} from 'https://vibebac.kr/vibebackr.js';\nconst client = createVibeClient();\nclient.listRecords('${colId}').then(records => console.log(records));`;
+                                navigator.clipboard.writeText(code).then(() => {
+                                    const orig = btn.textContent;
+                                    btn.textContent = 'Copied!';
+                                    setTimeout(() => {
+                                        btn.textContent = orig;
+                                    }, 1400);
+                                });
+                            };
+                        });
+
+                        container.querySelectorAll('.btn-delete-col').forEach(btn => {
+                            btn.onclick = function() {
+                                const colId = this.getAttribute('data-id');
+                                const colName = this.getAttribute('data-name');
+                                if(!confirm(`Delete collection "${colName}" (${colId}) and all of its records?`)) {
+                                    return;
+                                }
+                                fetch(`/api/collections/${encodeURIComponent(colId)}`, {
+                                    method: 'DELETE',
+                                    headers: {Authorization: `Bearer ${session.token}`}
+                                })
+                                    .then(delRes => {
+                                        if(!delRes.ok) {
+                                            return delRes.json().then(err => {
+                                                throw new Error(err.error || 'Failed to delete collection');
+                                            });
+                                        }
+                                        return loadCollections();
+                                    })
+                                    .catch(e => alert(e.message));
+                            };
+                        });
+
+                        container.querySelectorAll('.btn-leave-tenant').forEach(btn => {
+                            btn.onclick = function() {
+                                const tenantId = this.getAttribute('data-tenant');
+                                const colName = this.getAttribute('data-name');
+                                const shortT = tenantId ? tenantId.substring(0, 8) : '';
+                                if(!confirm(`Remove tenant "${shortT}" (collection "${colName}") from your workspace? You will leave this tenant.`)) {
+                                    return;
+                                }
+                                fetch(`/api/tenants/${encodeURIComponent(tenantId)}`, {
+                                    method: 'DELETE',
+                                    headers: {Authorization: `Bearer ${session.token}`}
+                                })
+                                    .then(leaveRes => {
+                                        if(!leaveRes.ok) {
+                                            return leaveRes.json().then(err => {
+                                                throw new Error(err.error || 'Failed to leave tenant');
+                                            });
+                                        }
+                                        return loadCollections();
+                                    })
+                                    .catch(e => alert(e.message));
+                            };
+                        });
+
+                        container.querySelectorAll('.btn-browse').forEach(btn => {
+                            btn.onclick = function() {
+                                openRecordsModal(this.getAttribute('data-id'), this.getAttribute('data-name'));
+                            };
+                        });
+                    })
+                    .catch(e => {
+                        container.innerHTML = `<div class="console__error" style="padding: 16px 0;">${e.message}</div>`;
+                    });
+            }
+
+            document.getElementById('btnSubmitJsonImport').onclick = function() {
+                const errEl = document.getElementById('jsonImportError');
+                errEl.style.display = 'none';
+                const raw = document.getElementById('jsonConfigInput').value.trim();
+                if(!raw) {
+                    errEl.textContent = 'Please enter or paste a JSON configuration.';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                let payload;
+                try {
+                    payload = JSON.parse(raw);
+                } catch(err) {
+                    errEl.textContent = `Invalid JSON: ${err.message}`;
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                if(!payload.name) {
+                    errEl.textContent = 'Missing required property "name" in collection JSON.';
+                    errEl.style.display = 'block';
+                    return;
+                }
+
+                const targetTenantEl = document.getElementById('formTargetTenant');
+                if(!payload.tenant_id && targetTenantEl && targetTenantEl.value) {
+                    payload.tenant_id = targetTenantEl.value;
+                }
+
+                this.disabled = true;
+                this.textContent = 'Creating...';
+                fetch('/api/collections', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                    .then(res => {
+                        if(!res.ok) {
+                            return res.json().then(err => {
+                                throw new Error(err.error || 'Failed to create collection');
+                            });
+                        }
+                        closeCreateModal();
+                        return loadCollections();
+                    })
+                    .catch(e => {
+                        errEl.textContent = e.message;
+                        errEl.style.display = 'block';
+                    })
+                    .then(() => {
+                        this.disabled = false;
+                        this.textContent = 'Create Collection & Seed Records';
+                    });
+            };
+
+            document.getElementById('createCollectionForm').onsubmit = function(e) {
+                e.preventDefault();
+                const errEl = document.getElementById('formCreateError');
+                errEl.style.display = 'none';
+                const name = document.getElementById('formColName').value.trim();
+                const visibility = document.getElementById('formColVis').value;
+                const originsRaw = document.getElementById('formColOrigins').value.trim();
+                const vectorEnabled = document.getElementById('formColVector').checked;
+                const autoInviteEl = document.getElementById('formColAutoInvite');
+                const autoInviteShares = autoInviteEl ? autoInviteEl.checked : false;
+                const originUrls = originsRaw.split(',').map(s => s.trim()).filter(Boolean);
+                const targetTenantEl = document.getElementById('formTargetTenant');
+                const targetTenantId = targetTenantEl && targetTenantEl.value ? targetTenantEl.value : undefined;
+
+                const submitBtn = document.getElementById('btnSubmitFormCreate');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Creating...';
+                fetch('/api/collections', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        tenant_id: targetTenantId,
+                        default_visibility: visibility,
+                        origin_urls: originUrls,
+                        vector_search_enabled: vectorEnabled,
+                        auto_invite_shares: autoInviteShares
+                    })
+                })
+                    .then(res => {
+                        if(!res.ok) {
+                            return res.json().then(err => {
+                                throw new Error(err.error || 'Failed to create collection');
+                            });
+                        }
+                        document.getElementById('createCollectionForm').reset();
+                        closeCreateModal();
+                        return loadCollections();
+                    })
+                    .catch(e => {
+                        errEl.textContent = e.message;
+                        errEl.style.display = 'block';
+                    })
+                    .then(() => {
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = 'Create Collection';
+                    });
+            };
+
+            const recordsModal = document.getElementById('recordsModal');
+            document.getElementById('btnCloseRecordsModal').onclick = () => {
+                recordsModal.style.display = 'none';
+                delete session.activeBrowseColId;
+            };
+
+            function openRecordsModal(colId, colName) {
+                session.activeBrowseColId = colId;
+                recordsModal.style.display = 'flex';
+                document.getElementById('recordsModalTitle').textContent = colName;
+                document.getElementById('recordsModalSubtitle').textContent = `// ${colId}`;
+                document.getElementById('addRecordBox').style.display = 'none';
+                loadRecordsList(colId);
+            }
+
+            function loadRecordsList(colId) {
+                const listEl = document.getElementById('recordsListContainer');
+                listEl.innerHTML = '<div class="console__meta" style="text-align: center; padding: 20px;">Loading records...</div>';
+                return fetch(`/api/collections/${encodeURIComponent(colId)}/records`, {
+                    headers: {Authorization: `Bearer ${session.token}`}
+                })
+                    .then(res => {
+                        if(!res.ok) {
+                            throw new Error('Failed to load records');
+                        }
+                        return res.json();
+                    })
+                    .then(records => {
+                        document.getElementById('recordsCountText').textContent = `${records.length} record(s)`;
+
+                        if(!records || records.length < 1) {
+                            listEl.innerHTML = '<div class="console__meta" style="text-align: center; padding: 28px; border: 1px dashed var(--border); border-radius: var(--radius);">No records yet. Click "+ Add Record" above.</div>';
+                            return;
+                        }
+
+                        listEl.innerHTML = '';
+                        records.forEach(r => {
+                            const item = document.createElement('div');
+                            item.className = 'records__card';
+                            let dataFormatted = '{}';
+                            try {
+                                dataFormatted = JSON.stringify(JSON.parse(r.data), null, 2);
+                            } catch(e) {
+                                dataFormatted = r.data || '{}';
+                            }
+
+                            item.innerHTML = `
+                                <div class="records__card-header">
+                                    <div>
+                                        <strong>${escapeHtml(r.title)}</strong>
+                                        <div class="console__meta">
+                                            <code>${escapeHtml(r.id)}</code> · ${new Date(r.created_at).toLocaleString()}
+                                        </div>
+                                    </div>
+                                    <button class="btn sm danger btn-del-rec" data-recid="${r.id}">Delete</button>
+                                </div>
+                                ${r.content ? `<p class="records__card-copy">${escapeHtml(r.content)}</p>` : ''}
+                                <pre><code>${escapeHtml(dataFormatted)}</code></pre>
+                            `;
+                            listEl.appendChild(item);
+                        });
+
+                        listEl.querySelectorAll('.btn-del-rec').forEach(b => {
+                            b.onclick = function() {
+                                const recId = this.getAttribute('data-recid');
+                                if(!confirm('Delete this record?')) {
+                                    return;
+                                }
+                                fetch(`/api/collections/${encodeURIComponent(colId)}/records/${encodeURIComponent(recId)}`, {
+                                    method: 'DELETE',
+                                    headers: {Authorization: `Bearer ${session.token}`}
+                                })
+                                    .then(() => loadRecordsList(colId))
+                                    .catch(e => alert(e.message));
+                            };
+                        });
+                    })
+                    .catch(e => {
+                        listEl.innerHTML = `<div class="console__error" style="padding: 12px;">${e.message}</div>`;
+                    });
+            }
+
+            document.getElementById('btnToggleAddRecord').onclick = () => {
+                const box = document.getElementById('addRecordBox');
+                box.style.display = box.style.display === 'none' ? 'block' : 'none';
+            };
+            document.getElementById('btnCancelAddRecord').onclick = () => {
+                document.getElementById('addRecordBox').style.display = 'none';
+            };
+
+            document.getElementById('btnSaveRecord').onclick = function() {
+                if(!session.activeBrowseColId) {
+                    return;
+                }
+                const title = document.getElementById('newRecTitle').value.trim();
+                const content = document.getElementById('newRecContent').value.trim();
+                const rawData = document.getElementById('newRecData').value.trim();
+
+                if(!title) {
+                    alert('Title is required');
+                    return;
+                }
+
+                let parsedData = {};
+                if(rawData) {
+                    try {
+                        parsedData = JSON.parse(rawData);
+                    } catch(e) {
+                        alert(`Invalid Data JSON: ${e.message}`);
+                        return;
+                    }
+                }
+
+                this.disabled = true;
+                this.textContent = 'Saving...';
+                fetch(`/api/collections/${encodeURIComponent(session.activeBrowseColId)}/records`, {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({title, content, data: parsedData})
+                })
+                    .then(res => {
+                        if(!res.ok) {
+                            return res.json().then(err => {
+                                throw new Error(err.error || 'Failed saving record');
+                            });
+                        }
+                        document.getElementById('newRecTitle').value = '';
+                        document.getElementById('newRecContent').value = '';
+                        document.getElementById('newRecData').value = '';
+                        document.getElementById('addRecordBox').style.display = 'none';
+                        return loadRecordsList(session.activeBrowseColId);
+                    })
+                    .catch(e => alert(e.message))
+                    .then(() => {
+                        this.disabled = false;
+                        this.textContent = 'Save Record';
+                    });
+            };
+
+            function loadBillingStatus() {
+                const billingSection = document.getElementById('workspace-billing');
+                if(!billingSection) {
+                    return Promise.resolve();
+                }
+                return fetch('/api/billing/status', {
+                    headers: {Authorization: `Bearer ${session.token}`}
+                })
+                    .then(res => res.ok ? res.json() : null)
+                    .then(status => {
+                        if(!status || !status.enabled) {
+                            billingSection.style.display = 'none';
+                            return;
+                        }
+                        billingSection.style.display = 'block';
+
+                        const planBadge = document.getElementById('billingPlanBadge');
+                        const quotaBadge = document.getElementById('billingQuotaBadge');
+                        const statusCopy = document.getElementById('billingStatusCopy');
+                        const btnStarter = document.getElementById('btnActivateStarter');
+                        const btnPro = document.getElementById('btnUpgradePro');
+
+                        const planName = status.plan === 'pro' ? 'Pro (£5/mo)' : 'Starter (£3/mo)';
+                        quotaBadge.textContent = `${status.collections_used || 0} / ${status.max_collections || 10} collections`;
+
+                        btnStarter.style.display = 'none';
+                        btnPro.style.display = 'none';
+
+                        if(status.tenant_id && !user.tenant_id) {
+                            user.tenant_id = status.tenant_id;
+                            const tenantPill = document.getElementById('consoleTenantPill');
+                            if(tenantPill) {
+                                tenantPill.textContent = `Tenant: ${status.tenant_id.substring(0, 8)}`;
+                            }
+                            loadAvailableTenants();
+                        }
+
+                        if(!status.tenant_id || status.billing_status === 'no_tenant') {
+                            planBadge.textContent = '7-Day Free Trial Available';
+                            statusCopy.textContent = `Create a collection to provision your workspace tenant and start your 7-day free trial (up to ${status.max_collections || 10} collections).`;
+                        } else if(status.billing_status === 'free') {
+                            planBadge.textContent = `Complimentary ${status.plan === 'pro' ? 'Pro' : 'Starter'} (Voucher: ${status.voucher_code || 'Active'})`;
+                            statusCopy.textContent = `Your workspace has complimentary access with up to ${status.max_collections} collections.`;
+                            if(status.plan !== 'pro' && status.gocardless_configured) {
+                                btnPro.textContent = 'Upgrade to Pro (£5/mo · 25 Collections)';
+                                btnPro.style.display = 'inline-flex';
+                            }
+                        } else if(status.billing_status === 'active') {
+                            planBadge.textContent = `${planName} - Active`;
+                            statusCopy.textContent = status.read_only
+                                ? `Quota exceeded (${status.collections_used}/${status.max_collections} collections). Delete excess collections or upgrade to restore write access.`
+                                : `GoCardless Direct Debit active. Your workspace supports up to ${status.max_collections} collections.`;
+                            if(status.plan !== 'pro' && status.gocardless_configured) {
+                                btnPro.textContent = 'Upgrade to 25 Collections (£5/mo · £2 today)';
+                                btnPro.style.display = 'inline-flex';
+                            }
+                        } else if(status.billing_status === 'trialing' && !status.read_only) {
+                            planBadge.textContent = `Starter Trial (${status.trial_days_left || 0} day(s) left)`;
+                            statusCopy.textContent = `You are on a 7-day free trial (up to ${status.max_collections} collections). Set up GoCardless Direct Debit (£3/mo) or redeem a voucher before your trial ends to avoid read-only lock.`;
+                            if(status.gocardless_configured) {
+                                btnStarter.style.display = 'inline-flex';
+                                btnPro.textContent = 'Upgrade to Pro (£5/mo · 25 Collections)';
+                                btnPro.style.display = 'inline-flex';
+                            }
+                        } else {
+                            planBadge.textContent = 'Read-Only Mode - Payment Required';
+                            statusCopy.textContent = 'Your trial has expired or your Direct Debit mandate is inactive. Existing collections and records remain readable, but writes are locked until you activate a plan or redeem a voucher.';
+                            if(status.gocardless_configured) {
+                                btnStarter.style.display = 'inline-flex';
+                                btnPro.textContent = 'Activate Pro (£5/mo · 25 Collections)';
+                                btnPro.style.display = 'inline-flex';
+                            }
+                        }
+                    })
+                    .catch(() => {});
+            }
+
+            const billingFeedback = document.getElementById('billingFeedbackMsg');
+            function showBillingFeedback(msg, isError) {
+                if(!billingFeedback) {
+                    return;
+                }
+                billingFeedback.textContent = msg;
+                billingFeedback.style.color = isError ? '#ef4444' : 'var(--fg)';
+                billingFeedback.style.display = 'inline';
+            }
+
+            document.getElementById('btnActivateStarter').onclick = function() {
+                this.disabled = true;
+                fetch('/api/billing/checkout', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({plan: 'starter'})
+                })
+                    .then(res => res.json().then(data => ({ok: res.ok, data})))
+                    .then(({ok, data}) => {
+                        if(!ok) {
+                            throw new Error(data.error || 'Failed starting GoCardless checkout');
+                        }
+                        if(data.authorisation_url) {
+                            window.location.href = data.authorisation_url;
+                        }
+                    })
+                    .catch(e => showBillingFeedback(e.message, true))
+                    .then(() => {
+                        this.disabled = false;
+                    });
+            };
+
+            document.getElementById('btnUpgradePro').onclick = function() {
+                this.disabled = true;
+                fetch('/api/billing/upgrade', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                })
+                    .then(res => res.json().then(data => ({ok: res.ok, data})))
+                    .then(({ok, data}) => {
+                        if(!ok) {
+                            throw new Error(data.error || 'Failed upgrading plan');
+                        }
+                        if(data.authorisation_url) {
+                            window.location.href = data.authorisation_url;
+                            return;
+                        }
+                        showBillingFeedback(data.message || 'Upgraded to Pro (25 collections)!', false);
+                        return loadBillingStatus();
+                    })
+                    .catch(e => showBillingFeedback(e.message, true))
+                    .then(() => {
+                        this.disabled = false;
+                    });
+            };
+
+            document.getElementById('btnRedeemVoucher').onclick = function() {
+                const codeInput = document.getElementById('voucherCodeInput');
+                const code = (codeInput ? codeInput.value : '').trim();
+                if(!code) {
+                    showBillingFeedback('Enter a voucher code first.', true);
+                    return;
+                }
+                this.disabled = true;
+                fetch('/api/billing/voucher', {
+                    method: 'POST',
+                    headers: {
+                        Authorization: `Bearer ${session.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({code})
+                })
+                    .then(res => res.json().then(data => ({ok: res.ok, data})))
+                    .then(({ok, data}) => {
+                        if(!ok) {
+                            throw new Error(data.error || 'Invalid voucher code');
+                        }
+                        if(codeInput) {
+                            codeInput.value = '';
+                        }
+                        showBillingFeedback(`Voucher redeemed! Unlocked ${data.max_collections} collections.`, false);
+                        return loadBillingStatus();
+                    })
+                    .catch(e => showBillingFeedback(e.message, true))
+                    .then(() => {
+                        this.disabled = false;
+                    });
+            };
+
+            function loadAvailableTenants() {
+                const selectEl = document.getElementById('formTargetTenant');
+                const groupEl = document.getElementById('targetTenantGroup');
+                if(!selectEl || !groupEl) {
+                    return Promise.resolve();
+                }
+                return fetch('/api/tenants', {
+                    headers: {Authorization: `Bearer ${session.token}`}
+                })
+                    .then(res => res.ok ? res.json() : [])
+                    .then(memberships => {
+                        const list = memberships || [];
+                        const seen = new Set(user.tenant_id ? [user.tenant_id] : []);
+                        const initialOptions = user.tenant_id
+                            ? [{id: user.tenant_id, label: `Personal Workspace (${user.tenant_id.substring(0, 8)})`}]
+                            : [];
+
+                        const options = list.reduce((acc, m) => {
+                            if(
+                                m
+                                && m.tenant_id
+                                && !seen.has(m.tenant_id)
+                                && (m.role === 'admin' || m.role === 'manager')
+                            ) {
+                                seen.add(m.tenant_id);
+                                acc.push({
+                                    id: m.tenant_id,
+                                    label: `Shared Workspace (${m.tenant_id.substring(0, 8)} · ${m.role})`
+                                });
+                            }
+                            return acc;
+                        }, initialOptions);
+
+                        selectEl.innerHTML = '';
+                        options.forEach(opt => {
+                            const o = document.createElement('option');
+                            o.value = opt.id;
+                            o.textContent = opt.label;
+                            selectEl.appendChild(o);
+                        });
+                        groupEl.style.display = options.length > 1 || (!user.tenant_id && options.length === 1) ? 'block' : 'none';
+                    })
+                    .catch(() => {});
+            }
+
+            const inviteFeedback = document.getElementById('inviteFeedbackMsg');
+            function showInviteFeedback(msg, isError) {
+                if(!inviteFeedback) {
+                    return;
+                }
+                inviteFeedback.textContent = msg;
+                inviteFeedback.style.color = isError ? '#ef4444' : 'var(--fg)';
+                inviteFeedback.style.display = 'block';
+            }
+
+            function loadInvites() {
+                const listEl = document.getElementById('invitesListContainer');
+                if(!listEl) {
+                    return Promise.resolve();
+                }
+                return fetch('/api/invites', {
+                    headers: {Authorization: `Bearer ${session.token}`}
+                })
+                    .then(res => {
+                        if(!res.ok) {
+                            listEl.innerHTML = '<div class="console__meta">Invite management requires workspace admin or manager privileges.</div>';
+                            return null;
+                        }
+                        return res.json();
+                    })
+                    .then(invites => {
+                        if(invites === null) {
+                            return;
+                        }
+                        if(!invites || invites.length < 1) {
+                            listEl.innerHTML = '<div class="console__meta">No collaborators invited yet.</div>';
+                            return;
+                        }
+                        listEl.innerHTML = '';
+                        invites.forEach(inv => {
+                            const row = document.createElement('div');
+                            row.style.cssText = 'display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px dashed var(--border); flex-wrap: wrap;';
+                            const statusLabel = inv.used_at ? 'Joined' : 'Invited';
+                            row.innerHTML = `
+                                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                                    <strong>${escapeHtml(inv.email)}</strong>
+                                    <span class="console__pill">${escapeHtml(inv.role)}</span>
+                                    <span class="console__meta">${statusLabel}</span>
+                                </div>
+                                <button type="button" class="btn sm danger btn-revoke-invite" data-id="${escapeHtml(inv.id)}" data-email="${escapeHtml(inv.email)}">Revoke</button>
+                            `;
+                            listEl.appendChild(row);
+                        });
+                        listEl.querySelectorAll('.btn-revoke-invite').forEach(btn => {
+                            btn.onclick = function() {
+                                const invId = this.getAttribute('data-id');
+                                const invEmail = this.getAttribute('data-email');
+                                if(!confirm(`Revoke invite for ${invEmail}?`)) {
+                                    return;
+                                }
+                                fetch(`/api/invites/${encodeURIComponent(invId)}`, {
+                                    method: 'DELETE',
+                                    headers: {Authorization: `Bearer ${session.token}`}
+                                })
+                                    .then(delRes => {
+                                        if(!delRes.ok) {
+                                            return delRes.json().then(err => {
+                                                throw new Error(err.error || 'Failed revoking invite');
+                                            });
+                                        }
+                                        return loadInvites();
+                                    })
+                                    .catch(e => showInviteFeedback(e.message, true));
+                            };
+                        });
+                    })
+                    .catch(e => {
+                        listEl.innerHTML = `<div class="console__error">${escapeHtml(e.message)}</div>`;
+                    });
+            }
+
+            const createInviteForm = document.getElementById('createInviteForm');
+            if(createInviteForm) {
+                createInviteForm.onsubmit = function(e) {
+                    e.preventDefault();
+                    const emailEl = document.getElementById('inviteEmailInput');
+                    const roleEl = document.getElementById('inviteRoleSelect');
+                    const submitBtn = document.getElementById('btnSendInvite');
+                    const email = (emailEl ? emailEl.value : '').trim();
+                    const role = roleEl ? roleEl.value : 'member';
+                    if(!email) {
+                        return;
+                    }
+                    submitBtn.disabled = true;
+                    fetch('/api/invites', {
+                        method: 'POST',
+                        headers: {
+                            Authorization: `Bearer ${session.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({email, role})
+                    })
+                        .then(res => res.json().then(data => ({ok: res.ok, data})))
+                        .then(({ok, data}) => {
+                            if(!ok) {
+                                throw new Error(data.error || 'Failed creating invite');
+                            }
+                            if(emailEl) {
+                                emailEl.value = '';
+                            }
+                            showInviteFeedback(`Invited ${email} as ${role}.`, false);
+                            return loadInvites();
+                        })
+                        .catch(err => showInviteFeedback(err.message, true))
+                        .then(() => {
+                            submitBtn.disabled = false;
+                        });
+                };
+            }
+
+            loadAvailableTenants();
+            loadCollections();
+            loadInvites();
+            document.getElementById('consoleHeroBar').style.display = 'block';
+            document.getElementById('userConsoleView').style.display = 'block';
+
+            document.getElementById('btnConsoleSignOut').onclick = performSignOut;
+
+            document.getElementById('btnSignOutAll').onclick = function() {
+                if(!confirm('Revoke all active sessions and refresh tokens across all devices?')) {
+                    return;
+                }
+                fetch('/api/auth/revoke-all', {
+                    method: 'POST',
+                    headers: {Authorization: `Bearer ${session.token}`}
+                })
+                    .catch(() => null)
+                    .then(() => {
+                        clearLocalSession();
+                        window.location.reload();
+                    });
+            };
+        });
+    })();
+</script>

@@ -1,0 +1,21 @@
+# AWS Configuration
+aws_region  = "us-east-1"
+app_name    = "vibe-backr"
+domain_name = "vibebac.kr"
+
+# Set to false if you already created a Route 53 hosted zone for vibebac.kr manually
+create_route53_zone = true
+
+# Neon Configuration
+# You can also set this via export NEON_API_KEY="your-token"
+neon_api_key   = "your-neon-api-key"
+neon_region_id = "aws-us-east-1"
+
+# Optional: custom JWT secret (if left empty, a secure 48-char random secret is generated)
+# jwt_secret = "my-custom-jwt-secret"
+
+# Optional: Google Gemini API key for 768d gemini-embedding-001 vector search
+# gemini_api_key = "AIzaSy..."
+
+# Optional: Ollama or external EmbeddingGemma 2 URL
+# embedder_url = "https://ollama.mycompany.com"

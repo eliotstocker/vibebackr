@@ -1,0 +1,36 @@
+# Binaries
+/vibebackr
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test and coverage artifacts
+coverage.out
+*.test
+
+# Local databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# Environment & local config
+.env
+.env.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Terraform & build distribution
+node_modules/
+web/dist/
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/dist/
+terraform/.aws_tf_config
+*.tfvars
+*.tfvars.json

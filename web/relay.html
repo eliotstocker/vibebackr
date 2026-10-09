@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cross-Origin &amp; CSP Relay - VibeBackr</title>
+    <meta name="description" content="Secure postMessage relay transport bridge for VibeBackr frontend clients operating under strict Content Security Policies or sandboxed environments."/>
+    <link rel="preconnect" href="https://fonts.googleapis.com"/>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@100;300;400;500;700&display=swap"/>
+    <link rel="stylesheet" href="/style.css">
+    <link rel="icon" type="image/svg+xml" href="/logo.svg">
+    <style>
+        .relay {
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .relay__card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 24px;
+            backdrop-filter: blur(12px);
+        }
+
+        .relay__status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            color: #34d399;
+        }
+
+        .relay__status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        .relay__log {
+            background: #090d16;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 6px;
+            padding: 12px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.8rem;
+            max-height: 360px;
+            overflow-y: auto;
+            color: #94a3b8;
+        }
+
+        .relay__log-entry {
+            padding: 6px 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .relay__log-entry:last-child {
+            border-bottom: none;
+        }
+
+        .relay__badge {
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+        }
+
+        .relay__badge.get {
+            background: rgba(59, 130, 246, 0.2);
+            color: #60a5fa;
+        }
+
+        .relay__badge.post {
+            background: rgba(16, 185, 129, 0.2);
+            color: #34d399;
+        }
+
+        .relay__badge.put {
+            background: rgba(245, 158, 11, 0.2);
+            color: #fbbf24;
+        }
+
+        .relay__badge.delete {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+        }
+
+        body.embedded {
+            background: transparent;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+        body.embedded header,
+        body.embedded footer,
+        body.embedded .relay {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="nav">
+        <div class="nav-inner">
+            <a href="/" class="wordmark">vibebackr</a>
+            <nav>
+                <a href="/">Overview</a>
+                <a href="/guide">Client Guide</a>
+                <a href="/login" class="nav-btn">Sign In / Console</a>
+            </nav>
+        </div>
+    </header>
+
+    <main class="relay">
+        <div class="relay__card">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <div>
+                    <h1 style="font-size: 1.6rem; margin: 0 0 6px 0; color: #f8fafc;">Cross-Origin &amp; CSP Relay</h1>
+                    <p style="margin: 0; font-size: 0.9rem; color: #94a3b8;">
+                        Same-origin postMessage proxy for environments with strict Content Security Policies, sandboxed iframes, or restricted webviews.
+                    </p>
+                </div>
+                <div class="relay__status">
+                    <span class="relay__status-dot"></span>
+                    <span id="relayStatusText">Relay Active</span>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin: 20px 0;">
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <div style="font-size: 0.8rem; color: #94a3b8;">Embedding Mode</div>
+                    <div id="embedModeText" style="font-size: 1.1rem; font-weight: 600; color: #f8fafc; margin-top: 4px;">Standalone Window</div>
+                </div>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <div style="font-size: 0.8rem; color: #94a3b8;">Requests Relayed</div>
+                    <div id="requestCountText" style="font-size: 1.1rem; font-weight: 600; color: #f8fafc; margin-top: 4px;">0</div>
+                </div>
+                <div style="background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 6px; border: 1px solid rgba(255, 255, 255, 0.05);">
+                    <div style="font-size: 0.8rem; color: #94a3b8;">Canonical Origin</div>
+                    <div style="font-size: 0.95rem; font-weight: 600; color: #38bdf8; margin-top: 4px;">https://vibebac.kr</div>
+                </div>
+            </div>
+
+            <h3 style="font-size: 1rem; margin: 24px 0 10px 0; color: #e2e8f0;">Live Activity Log</h3>
+            <div class="relay__log" id="activityLog">
+                <div class="relay__log-entry" style="color: #64748b;">
+                    <span>Waiting for parent or opener window postMessage requests...</span>
+                    <span style="font-size: 0.75rem;">Ready</span>
+                </div>
+            </div>
+
+            <div style="margin-top: 24px; padding-top: 16px; border-top: 1px solid rgba(255, 255, 255, 0.08); font-size: 0.85rem; color: #94a3b8;">
+                <strong>How to use this relay from your app:</strong>
+                <p style="margin: 6px 0 0 0;">
+                    Embed <code>&lt;iframe id="vb-relay" src="https://vibebac.kr/relay" style="display:none;"&gt;&lt;/iframe&gt;</code> or open via <code>window.open('https://vibebac.kr/relay', 'vb_relay')</code>. Send messages with <code>{type: 'vb_relay_request', id, path, method, headers, body}</code>.
+                    See the <a href="/guide" style="color: #38bdf8;">Client Guide</a> for complete code snippets.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <div class="nav-inner" style="justify-content: center;">
+            <p>&copy; 2026 VibeBackr · The Instant AI Agent Backend · <a href="/guide">Client Guide</a> · <a href="/login">Console</a></p>
+        </div>
+    </footer>
+
+    <script>
+        (function() {
+            const isIframe = window.self !== window.top;
+            const hasOpener = Boolean(window.opener);
+            let requestCount = 0;
+
+            //hide chrome when embedded in invisible iframe
+            if(
+                isIframe
+                && (window.innerWidth < 100 || window.innerHeight < 100)
+            ) {
+                document.body.classList.add('embedded');
+            }
+
+            const embedModeText = document.getElementById('embedModeText');
+            if(embedModeText) {
+                if(isIframe) {
+                    embedModeText.textContent = 'Iframe (Embedded)';
+                } else if(hasOpener) {
+                    embedModeText.textContent = 'Popup / Child Window';
+                } else {
+                    embedModeText.textContent = 'Standalone Inspection Tab';
+                }
+            }
+
+            function escapeHtml(str) {
+                return String(str == null ? '' : str)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function logActivity(method, path, status, ok, elapsedMs) {
+                const logBox = document.getElementById('activityLog');
+                if(!logBox) {
+                    return;
+                }
+                const entry = document.createElement('div');
+                entry.className = 'relay__log-entry';
+
+                const m = (method || 'GET').toUpperCase().replace(/[^A-Z]/g, '');
+                const mClass = m.toLowerCase();
+                const statusColor = ok ? '#34d399' : '#f87171';
+
+                entry.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span class="relay__badge ${escapeHtml(mClass)}">${escapeHtml(m)}</span>
+                        <span style="color: #f1f5f9;">${escapeHtml(path)}</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 12px;">
+                        <span style="color: #64748b; font-size: 0.75rem;">${escapeHtml(elapsedMs)}ms</span>
+                        <span style="color: ${statusColor}; font-weight: 600;">${escapeHtml(status)}</span>
+                    </div>
+                `;
+                if(logBox.children.length > 50) {
+                    logBox.removeChild(logBox.lastChild);
+                }
+                logBox.insertBefore(entry, logBox.firstChild);
+
+                const countText = document.getElementById('requestCountText');
+                if(countText) {
+                    countText.textContent = (++requestCount).toString();
+                }
+            }
+
+            function broadcastReady() {
+                const readyMsg = {type: 'vb_relay_ready', version: '1.0', origin: window.location.origin};
+                try {
+                    if(window.parent && window.parent !== window) {
+                        window.parent.postMessage(readyMsg, '*');
+                    }
+                } catch(e) {}
+                try {
+                    if(window.opener) {
+                        window.opener.postMessage(readyMsg, '*');
+                    }
+                } catch(e) {}
+            }
+
+            broadcastReady();
+            window.addEventListener('DOMContentLoaded', broadcastReady);
+
+            window.addEventListener('message', event => {
+                const data = event.data;
+                if(!data || typeof data !== 'object') {
+                    return;
+                }
+
+                //file:// or null origin requires wildcard targetOrigin
+                const targetOrigin = (!event.origin || event.origin === 'null') ? '*' : event.origin;
+
+                if(data.type === 'vb_relay_ping') {
+                    event.source && event.source.postMessage({
+                        type: 'vb_relay_pong',
+                        id: data.id,
+                        origin: window.location.origin
+                    }, targetOrigin);
+                    return;
+                }
+
+                if(data.type !== 'vb_relay_request') {
+                    return;
+                }
+
+                const reqId = data.id || `req_${Math.random().toString(36).substring(2, 9)}`;
+                const path = String(data.path || '');
+                const method = String(data.method || 'GET').toUpperCase();
+                const headers = data.headers || {};
+                const body = data.body;
+
+                //only allow relative paths or same-origin urls
+                const isSafeRelative = path.startsWith('/')
+                    && !path.startsWith('//')
+                    && !path.startsWith('/\\');
+                const isSafeSameOrigin = path.startsWith(`${window.location.origin}/`);
+                if(!isSafeRelative && !isSafeSameOrigin) {
+                    event.source && event.source.postMessage({
+                        type: 'vb_relay_response',
+                        id: reqId,
+                        ok: false,
+                        status: 400,
+                        error: 'Invalid path: relay only forwards to local VibeBackr instance endpoints.'
+                    }, targetOrigin);
+                    return;
+                }
+
+                const startTime = performance.now();
+                const fetchOptions = {
+                    method,
+                    headers
+                };
+
+                if(
+                    method !== 'GET'
+                    && method !== 'HEAD'
+                    && body !== undefined
+                    && body !== null
+                ) {
+                    fetchOptions.body = typeof body === 'string' ? body : JSON.stringify(body);
+                    if(!fetchOptions.headers['Content-Type'] && !fetchOptions.headers['content-type']) {
+                        fetchOptions.headers['Content-Type'] = 'application/json';
+                    }
+                }
+
+                fetch(path, fetchOptions)
+                    .then(res => {
+                        const contentType = res.headers.get('content-type') || '';
+                        const parsePromise = contentType.includes('application/json')
+                            ? res.json().catch(() => null)
+                            : res.text().catch(() => '');
+                        return parsePromise.then(responseData => {
+                            const elapsed = Math.round(performance.now() - startTime);
+                            logActivity(method, path, res.status, res.ok, elapsed);
+                            event.source && event.source.postMessage({
+                                type: 'vb_relay_response',
+                                id: reqId,
+                                ok: res.ok,
+                                status: res.status,
+                                statusText: res.statusText,
+                                data: responseData
+                            }, targetOrigin);
+                        });
+                    })
+                    .catch(err => {
+                        const elapsedErr = Math.round(performance.now() - startTime);
+                        logActivity(method, path, 0, false, elapsedErr);
+                        event.source && event.source.postMessage({
+                            type: 'vb_relay_response',
+                            id: reqId,
+                            ok: false,
+                            status: 0,
+                            statusText: 'Relay Fetch Error',
+                            error: err.message || 'Network error in relay transport'
+                        }, targetOrigin);
+                    });
+            });
+        })();
+    </script>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "name": "vibebackr",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Instant cloud persistence, collections, and authentication backend for AI coding agents",
+  "scripts": {
+    "build:site": "stackr-site build web",
+    "serve:site": "stackr-site serve web"
+  },
+  "devDependencies": {
+    "stackr-site": "github:eliotstocker/stackr-site"
+  }
+}
